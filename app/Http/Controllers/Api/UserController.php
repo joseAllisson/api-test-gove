@@ -4,20 +4,24 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\UserService;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 class UserController extends Controller
 {
-  // Listar com paginação
+  public function __construct(
+    private UserService $userService
+  ) {}
+
   public function index(Request $request)
   {
     $perPage = $request->query('per_page', 10);
-    $users = User::with('permissions')->paginate($perPage);
+    $users = $this->userService->paginateUsers($perPage);
 
     return response()->json($users);
   }
 
-  // Criar usuário
   public function store(Request $request)
   {
     $validated = $request->validate([
@@ -28,30 +32,23 @@ class UserController extends Controller
       'user_type' => 'nullable|string',
       'sector' => 'nullable|string',
       'permissions' => 'nullable|array',
+      'permissions.*' => 'exists:permissions,id',
     ]);
 
-    // Criar usuário
-    $user = User::create($validated);
+    $user = $this->userService->createUser($validated);
 
-    // Atribuir permissões se existirem
-    if (!empty($validated['permissions'])) {
-      $user->permissions()->sync($validated['permissions']);
-    }
-
-    return response()->json($user->load('permissions'), 201);
+    return response()->json($user, Response::HTTP_CREATED);
   }
 
-  // Mostrar usuário
   public function show($id)
   {
     $user = User::findOrFail($id);
     return response()->json($user);
   }
 
-  // Atualizar usuário
   public function update(Request $request, $id)
   {
-    $user = User::findOrFail($id);
+    $user = User::findOrFail($id)->first();
 
     $validated = $request->validate([
       'name' => 'sometimes|required|string',
@@ -64,21 +61,16 @@ class UserController extends Controller
       'permissions.*' => 'exists:permissions,id',
     ]);
 
-    $user->update($validated);
+    $updatedUser = $this->userService->updateUser($user, $validated);
 
-    if (array_key_exists('permissions', $validated)) {
-      $user->permissions()->sync($validated['permissions'] ?? []);
-    }
-
-    return response()->json($user);
+    return response()->json($updatedUser);
   }
 
-  // Deletar usuário
   public function destroy($id)
   {
-    $user = User::findOrFail($id);
-    $user->delete();
+    $user = User::findOrFail($id)->first();
+    $this->userService->deleteUser($user);
 
-    return response()->json(null, 204);
+    return response()->json(null, status: Response::HTTP_NO_CONTENT);
   }
 }
