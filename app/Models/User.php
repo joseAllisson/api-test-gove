@@ -23,11 +23,7 @@ class User extends Authenticatable
     'user_type',
     'sector',
   ];
-  /**
-   * The attributes that should be hidden for serialization.
-   *
-   * @var list<string>
-   */
+
   protected $hidden = [
     'password',
   ];
@@ -36,9 +32,4 @@ class User extends Authenticatable
   {
     return $this->belongsToMany(Permission::class)->whereNotNull('parent_id');
   }
-
-  // public function childPermissions()
-  // {
-  //   return $this->belongsToMany(Permission::class)->whereNotNull('parent_id');
-  // }
 }

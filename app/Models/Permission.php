@@ -19,7 +19,6 @@ class Permission extends Model
         return $this->belongsTo(Permission::class, 'parent_id');
     }
 
-    // Usuários com essa permissão
     public function users()
     {
         return $this->belongsToMany(User::class);
