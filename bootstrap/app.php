@@ -22,7 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
       return response()->json([
         'message' => 'Validation failed',
         'errors' => $e->errors(),
-      ], Response::HTTP_UNPROCESSABLE_ENTITY);
+      ], Response::HTTP_BAD_REQUEST);
     });
 
     $exceptions->renderable(function (\InvalidArgumentException $e, $request) {

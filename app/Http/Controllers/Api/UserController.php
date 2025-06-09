@@ -17,7 +17,9 @@ class UserController extends Controller
   public function index(Request $request)
   {
     $perPage = $request->query('per_page', 10);
-    $users = $this->userService->paginateUsers($perPage);
+    $orderBy = $request->query('order_by', 'id');
+    $order = $request->query('order', 'desc');
+    $users = $this->userService->paginateUsers($perPage, $orderBy, $order);
 
     return response()->json($users);
   }
@@ -28,7 +30,6 @@ class UserController extends Controller
       'name' => 'required|string',
       'email' => 'required|email|unique:users',
       'phone' => 'nullable|string',
-      'last_login' => 'nullable|date',
       'user_type' => 'nullable|string',
       'sector' => 'nullable|string',
       'permissions' => 'nullable|array',
@@ -42,13 +43,16 @@ class UserController extends Controller
 
   public function show($id)
   {
-    $user = User::findOrFail($id);
+    $user = $this->userService->findUserById($id);
+    if (!$user) {
+      return response()->json(['message' => 'User not found'], Response::HTTP_BAD_REQUEST);
+    }
     return response()->json($user);
   }
 
   public function update(Request $request, $id)
   {
-    $user = User::findOrFail($id)->first();
+    $user = User::findOrFail($id);
 
     $validated = $request->validate([
       'name' => 'sometimes|required|string',
